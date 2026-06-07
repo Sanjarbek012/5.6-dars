@@ -1,5 +1,4 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const UserSchema = require("../schema/user.schema");
 const CustomErrorHandler = require("../error/error");
 const sendEmail = require("../utils/sendEmail");
@@ -30,9 +29,8 @@ const register = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const verifyCode = randomcode;
-    const verifyCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 daqiqa
+    const verifyCodeExpires = new Date(Date.now() + 10 * 60 * 1000); 
 
-    // akkaunt yaratish
     await UserSchema.create({
       username,
       email,
@@ -41,7 +39,6 @@ const register = async (req, res, next) => {
       verifyCodeExpires,
     });
 
-    // Emailga kod yuborish
     await sendEmail(email, verifyCode);
 
     res.status(201).json({
@@ -78,7 +75,6 @@ const verify = async (req, res, next) => {
       );
     }
 
-    // Hisobni tasdiqlash
     await UserSchema.updateOne(
       { email },
       {
@@ -115,15 +111,15 @@ const login = async (req, res, next) => {
       return next(CustomErrorHandler.BadRequest("Email yoki parol noto'g'ri"));
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
-    );
+     const accsess = accsess_token(payload);
+     const refresh = refresh_token(payload);
+
+     res.cookie ("accessToken", accsess, {httpOnly: true, maxAge: 15 * 60 * 1000});
+     res.cookie ("refreshToken", refresh, {httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
 
     res.status(200).json({
       message: "Muvaffaqiyatli kirildi",
-      token,
+      token: accsess,
       user: {
         id: user._id,
         username: user.username,
@@ -136,4 +132,28 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, verify, login };
+
+
+
+const logout = async (req, res, next) => {
+  try {
+
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    
+    res.status(200).json({
+      message: "Muvaffaqiyatli chiqildi"
+    })
+    
+  } catch (error) {
+  res.status(500).json({
+    message: error.message 
+  })
+  }
+};
+
+
+
+
+
+module.exports = { register, verify, login, logout };

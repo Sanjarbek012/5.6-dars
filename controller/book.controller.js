@@ -1,5 +1,6 @@
 const BookSchema = require("../schema/book.schema");
 const CustomErrorHandler = require("../error/error");
+const CitationSchema = require("../schema/citation.schema");
 
 const getAllBooks = async (req, res, next) => {
   try {
@@ -43,9 +44,17 @@ const getOneBook = async (req, res, next) => {
     const { id } = req.params;
     const book = await BookSchema.findById(id).populate("author_info", "-_id -createdAt -updatedAt");
 
-    if (!book) return next(CustomErrorHandler.NotFound("Kitob topilmadi"));
+    if (!book) {
+      throw CustomErrorHandler.NotFound("Kitob topilmadi");
+    }
 
-    res.status(200).json(book);
+    const foundedCitations = await CitationSchema.find({book_id: id});
+
+
+    res.status(200).json({
+       data :foundedBook,
+       citation : foundedCitations
+      });
   } catch (error) {
     next(error);
   }
