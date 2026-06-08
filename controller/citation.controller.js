@@ -1,5 +1,6 @@
 const { body } = require("express-validator");
 const CustomErrorHandler = require("../error/error");
+const CitationSchema = require("../schema/citation.schema");
 
 const addCitation= async (req, res, next) => {
   try {
@@ -23,7 +24,7 @@ const updateCitation = async (req, res, next) => {
         const { id } = req.params;
         const { book , book_id } = req.body;
 
-        const foundBook = await BookSchema.findById(id);
+        const foundBook = await CitationSchema.findById(id);
         if (!foundBook) return next(CustomErrorHandler.NotFound("Kitob topilmadi"));
 
         const cover = req.file ? req.file.filename : foundBook.cover;
