@@ -125,8 +125,9 @@ const addAuthor = async (req, res, next) => {
   try {
     const { full_name, birth_year, death_year, bio, period, work, region } =
       req.body;
-    const photo = req.file ? req.file.filename : null;
-
+    if (!req.file) {
+      throw CustomErrorHandler.BadRequest("Rasm yuklanishi kerak");
+    }
     await AuthorSchema.create({
       full_name,
       birth_year,
@@ -135,7 +136,7 @@ const addAuthor = async (req, res, next) => {
       period,
       work,
       region,
-      photo,
+      picture: "http://localhost:3000/images/" + req.file.filename,
     });
     res.status(201).json({ message: "Muallif qo'shildi" });
   } catch (error) {

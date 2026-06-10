@@ -1,36 +1,38 @@
-const CustomErrorHandler = require("../error/error");
 const jwt = require("jsonwebtoken");
-const { access_token, refresh_token } = require("../utils/token-generator");
+const CustomErrorHandler = require("../error/error");
+const {access_token, refresh_token} = require("../utils/token.generator")
 
-module.exports = function refreshToken(req, res, ) {
+module.exports = function refreshToken(req, res, next) {
   try {
-    const token = req.headers.refreshToken;
+    const token = req.cookies.refreshToken;
 
     if (!token) {
-      throw CustomErrorHandler.BadRequest("Token not found");
+      throw CustomErrorHandler.BadRequest("No token provided");
     }
+    const decode = jwt.verify(token, process.env.REFRESH_SECRET_KEY);
+    req.user = decode;
 
-    const decode = jwt.verify( token , process.env.REFRESH_SEKRET_KEY)
+    const payload = {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+    };
+    const access = access_token(payload);
+    const refresh = refresh_token(payload);
 
-    req.user = decode
+    res.cookie("accessToken", access, {
+      httpOnly: true,
+      maxAge: 60 * 1000 * 15,
+    });
+    res.cookie("refreshToken", refresh, {
+      httpOnly: true,
+      maxAge: 60 * 1000 * 60 * 24 * 7,
+    });
 
-    const payload ={
-        id: req.user._id,
-        email: req.user._email , 
-        role : req.user.role 
-    }
+    res.status(200).json({
+      message:"Success"
+    })
 
-
-     const accsess = access_token(payload);
-     const refresh = refresh_token(payload);
-
-     res.cookie ("accessToken", accsess, {httpOnly: true, maxAge: 15 * 60 * 1000});
-     res.cookie ("refreshToken", refresh, {httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
-
-     res.status(200).json({
-        massege: "Success"
-     });
-   
   } catch (error) {
     next(error);
   }

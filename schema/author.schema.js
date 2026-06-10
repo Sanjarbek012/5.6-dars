@@ -14,6 +14,11 @@ const Author = new Schema(
         message: "{VALUE} bunday qiymat ko'rsatilmagan",
       },
     },
+
+    picture : {
+      type: String,
+      required: true,
+    },
     work: { type: String, required: true },
     region: { type: String, required: true },
     photo: { type: String, default: null },
